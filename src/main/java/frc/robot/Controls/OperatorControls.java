@@ -19,6 +19,7 @@ import frc.robot.subsystems.CommandSwerveDrivetrain;
 
 
 public class OperatorControls {
+    
   public static final boolean MACOS_WEIRD_CONTROLLER = true;
 
   public static void configure(int port, CommandSwerveDrivetrain drivetrain, Superstructure superstructure) {
@@ -85,6 +86,7 @@ public class OperatorControls {
     controller.leftTrigger().whileTrue(superstructure.kickerFeedCommand());
     controller.rightTrigger().whileTrue(superstructure.setIntakeDeployAndRoll());
     controller.leftStick().whileTrue(superstructure.hopperFeedCommand());
+    controller.rightStick().whileTrue(superstructure.intakeCommand());
 
     /*controller.leftBumper().toggleOnTrue(
         new ShootOnTheMoveCommand(drivetrain, superstructure, () -> superstructure.getAimPoint())

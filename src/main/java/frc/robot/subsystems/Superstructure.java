@@ -85,7 +85,7 @@ public class Superstructure extends SubsystemBase {
       targetHoodAngle = hoodAngle;
     }).andThen(
         Commands.parallel(
-            // shooter.setSpeed(shooterSpeed).asProxy(),
+            shooter.setSpeed(shooterSpeed).asProxy(),
             turret.setAngle(turretAngle).asProxy(),
             hood.setAngle(hoodAngle).asProxy()))
         .withName("Superstructure.aim");

@@ -49,10 +49,10 @@ public class IntakeSubsystem extends SubsystemBase {
   private SmartMotorControllerConfig smcConfig = new SmartMotorControllerConfig(this)
       .withControlMode(ControlMode.OPEN_LOOP)
       .withTelemetry("IntakeRollerMotor", TelemetryVerbosity.HIGH)
-      .withGearing(new MechanismGearing(GearBox.fromReductionStages(4))) // Direct drive, adjust if geared
+      .withGearing(new MechanismGearing(GearBox.fromReductionStages(3))) // Direct drive, adjust if geared
       .withMotorInverted(true)
       .withIdleMode(MotorMode.COAST)
-      .withStatorCurrentLimit(Amps.of(80));
+      .withStatorCurrentLimit(Amps.of(100));
 
   private SmartMotorController smc = new TalonFXWrapper(rollerMotor, DCMotor.getKrakenX44(1), smcConfig);
 
