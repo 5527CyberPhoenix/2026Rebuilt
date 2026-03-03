@@ -1,4 +1,4 @@
-package frc.robot.Commands;
+package frc.robot.commands;
 
 import java.util.Map;
 import java.util.function.Supplier;
@@ -77,7 +77,7 @@ public class ShootOnTheMoveCommand extends Command {
     // Calculate trajectory to aimPoint
     var target = aimPointSupplier.get();
 
-    var shooterLocation = drivetrain.getPose3d().getTranslation()
+    var shooterLocation = drivetrain.getPose3d(null).getTranslation()
         .plus(superstructure.getShooterPose().getTranslation());
 
     // Ignore this parameter for now, the range tables will account for it :/
@@ -96,7 +96,7 @@ public class ShootOnTheMoveCommand extends Command {
     // of flight.
     // If we're stationary, this should be zero. If we're backing up, this will be
     // "ahead" of the target, etc.
-    var updatedPosition = drivetrain.getFieldVelocity().times(timeOfFlight);
+    var updatedPosition = drivetrain.getSpeed(drivetrain).times(timeOfFlight);
     var correctiveVector = new Translation2d(updatedPosition.vxMetersPerSecond, updatedPosition.vyMetersPerSecond)
         .unaryMinus();
     var correctiveVector3d = new Translation3d(correctiveVector.getX(), correctiveVector.getY(), 0);
@@ -106,16 +106,16 @@ public class ShootOnTheMoveCommand extends Command {
 
     var correctedTarget = targetOnGround.plus(correctiveVector);
 
-    var vectorToTarget = drivetrain.getPose().getTranslation().minus(correctedTarget);
+    var vectorToTarget = drivetrain.getPose(drivetrain).getTranslation().minus(correctedTarget);
 
     var correctedDistance = Meters.of(vectorToTarget.getNorm());
     var calculatedHeading = vectorToTarget.getAngle()
         .rotateBy(drivetrain.getHeading().unaryMinus())
         .getMeasure();
 
-    Logger.recordOutput("ShootOnTheMove/RobotHeading", drivetrain.getHeading());
-   // Logger.recordOutput("ShootOnTheMove/CalculatedHeading", calculatedHeading);
-    Logger.recordOutput("ShootOnTheMove/distanceToTarget", distanceToTarget);
+  //   Logger.recordOutput("ShootOnTheMove/RobotHeading", drivetrain.getHeading());
+  //  // Logger.recordOutput("ShootOnTheMove/CalculatedHeading", calculatedHeading);
+  //   Logger.recordOutput("ShootOnTheMove/distanceToTarget", distanceToTarget);
 
     latestTurretAngle = calculatedHeading;
     latestShootSpeed = calculateRequiredShooterSpeed(correctedDistance);

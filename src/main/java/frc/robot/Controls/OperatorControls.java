@@ -86,7 +86,7 @@ public class OperatorControls {
     controller.leftTrigger().whileTrue(superstructure.kickerFeedCommand());
     controller.rightTrigger().whileTrue(superstructure.setIntakeDeployAndRoll());
     controller.leftStick().whileTrue(superstructure.hopperFeedCommand());
-    controller.rightStick().whileTrue(superstructure.intakeCommand());
+    controller.rightStick().whileTrue(superstructure.stowIntake());
 
     /*controller.leftBumper().toggleOnTrue(
         new ShootOnTheMoveCommand(drivetrain, superstructure, () -> superstructure.getAimPoint())

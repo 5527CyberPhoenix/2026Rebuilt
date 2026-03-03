@@ -210,7 +210,6 @@ public class Superstructure extends SubsystemBase {
 
   public Command feedAllCommand() {
     return Commands.parallel(
-        kicker.feedCommand().asProxy(),
         hopper.feedCommand().asProxy(),
         kicker.feedCommand().asProxy()).withName("Superstructure.feedAll");
     // intake.setPivotAngle(Degrees.of(46)).asProxy()).withName("Superstructure.feedAll");
@@ -237,6 +236,10 @@ public class Superstructure extends SubsystemBase {
 
   public Command setIntakeDeployAndRoll() {
     return intake.deployAndRollCommand().withName("Superstructure.setIntakeDeployAndRoll");
+  }
+
+  public Command stowIntake(){
+    return intake.stowCommand().withName("Superstructure.setIntakeStowed");
   }
 
   /**

@@ -12,11 +12,19 @@ import com.ctre.phoenix6.swerve.SwerveDrivetrain;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
+import com.ctre.phoenix6.swerve.SwerveRequest.ApplyFieldSpeeds;
 
 import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.estimator.PoseEstimator;
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator3d;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.units.measure.Angle;
@@ -25,10 +33,21 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
+import limelight.Limelight;
+import limelight.networktables.AngularVelocity3d;
+import limelight.networktables.LimelightPoseEstimator;
+import limelight.networktables.LimelightPoseEstimator.EstimationMode;
+import limelight.networktables.LimelightSettings.ImuMode;
+import limelight.networktables.LimelightSettings.LEDMode;
+import limelight.networktables.Orientation3d;
+import limelight.networktables.PoseEstimate;
+import swervelib.SwerveDrive;
 
 /**
  * Class that extends the Phoenix 6 SwerveDrivetrain class and implements
@@ -43,6 +62,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private double m_lastSimTime;
     private Pigeon2 gyro = new Pigeon2(0);
     private Rotation2d angle;
+    private boolean limelight_enabled = true;
+    private Limelight limelight;
+    private LimelightPoseEstimator poseEstimator;
     /* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
     private static final Rotation2d kBlueAlliancePerspectiveRotation = Rotation2d.kZero;
     /* Red alliance sees forward as 180 degrees (toward blue alliance wall) */
@@ -70,6 +92,15 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             this
         )
     );
+
+  private double distanceToHub = 0;  
+
+  public double getDistanceToHub() {
+    if (limelight_enabled) {
+      return distanceToHub;
+    }
+    return 0.0;
+  }
 
     /* SysId routine for characterizing steer. This is used to find PID gains for the steer motors. */
     private final SysIdRoutine m_sysIdRoutineSteer = new SysIdRoutine(
@@ -136,6 +167,65 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             startSimThread();
         }
     }
+
+   public void swerve(){
+     boolean blueAlliance = false;
+    Pose2d startingPose = blueAlliance ? new Pose2d(new Translation2d(Meter.of(2.75),
+        Meter.of(4)),
+        Rotation2d.fromDegrees(180))
+        : new Pose2d(new Translation2d(Meter.of(14.25),
+            Meter.of(4)),
+            Rotation2d.fromDegrees(0));
+    
+    if (limelight_enabled) {
+      limelight = new Limelight("limelight");
+      limelight.getSettings()
+          .withLimelightLEDMode(LEDMode.PipelineControl)
+          .withCameraOffset(new Pose3d(
+              Inches.of(-11.00).in(Meters),
+              Inches.of(-9.0).in(Meters),
+              Inches.of(12.75).in(Meters),
+              new Rotation3d(0, Degrees.of(21).in(Radians), Degrees.of(180).in(Radians))))
+          // new Rotation3d(0, 21, 180)))
+          .withImuMode(ImuMode.InternalImuMT1Assist)
+          .withImuAssistAlpha(0.01)
+          .save();
+
+      RobotModeTriggers.disabled().onTrue(Commands.runOnce(() -> {
+        System.out.println("Setting LL IMU Assist Alpha to 0.001");
+
+        limelight.getSettings()
+            // .withImuMode(ImuMode.InternalImuMT1Assist)
+            .withImuAssistAlpha(0.001)
+            .save();
+      }).ignoringDisable(true));
+
+      Command onEnable = Commands.runOnce(() -> {
+        System.out.println("Setting LL IMU Assist Alpha to 0.01");
+
+        limelight.getSettings()
+            // .withImuMode(ImuMode.InternalImuMT1Assist)
+            .withImuAssistAlpha(0.01)
+            .save();
+      });
+
+      RobotModeTriggers.teleop().onTrue(onEnable);
+      RobotModeTriggers.autonomous().onTrue(onEnable);
+      RobotModeTriggers.test().onTrue(onEnable);
+
+      // Required for megatag2 in periodic() function before fetching pose.
+      limelight.getSettings()
+          .withRobotOrientation(
+              new Orientation3d(gyro.getRotation3d(),
+                  new AngularVelocity3d(
+                      DegreesPerSecond.of(0),
+                      DegreesPerSecond.of(0),
+                      DegreesPerSecond.of(0))))
+          .save();
+
+      poseEstimator = limelight.createPoseEstimator(EstimationMode.MEGATAG2);}
+            
+   }
 
     /**
      * Constructs a CTRE SwerveDrivetrain using the specified constants.
@@ -226,6 +316,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         return m_sysIdRoutineToApply.dynamic(direction);
     }
 
+    
+
     @Override
     public void periodic() {
         /*
@@ -245,7 +337,53 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 m_hasAppliedOperatorPerspective = true;
             });
         }
+
+         if (limelight_enabled) {
+    //   // Get MegaTag2 pose
+    //   Optional<PoseEstimate> visionEstimate = poseEstimator.getPoseEstimate();
+    //   Pose3d redHub = new Pose3d(
+    //           Meter.of(11.902),
+    //           Meter.of(4.031),
+    //           Meter.of(0.0),
+    //           new Rotation3d(0, 0, 0));
+
+              
+
+
+
+
+
+        
+
     }
+
+}
+
+public Pose2d getPose(SwerveDrivetrain drivetrain){
+    return drivetrain.getState().Pose;
+  
+
+}
+
+
+public ChassisSpeeds getSpeed(SwerveDrivetrain drivetrain){
+    return drivetrain.getState().Speeds;
+}
+
+public Pose3d getPose3d(SwerveDrivePoseEstimator3d estimate){
+    return estimate.getEstimatedPosition();
+}
+
+public Rotation2d getHeading(){
+    return gyro.getRotation2d();
+}
+
+// SwerveRequest.ApplyFieldSpeeds fieldSpeeds = new ApplyFieldSpeeds();
+
+// public ChassisSpeeds getFieldRelativeSpeed(SwerveDrivetrain drivetrain){
+//     return drivetrain.getState().C;
+// }
+
 
     private void startSimThread() {
         m_lastSimTime = Utils.getCurrentTimeSeconds();
@@ -306,4 +444,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     public Optional<Pose2d> samplePoseAt(double timestampSeconds) {
         return super.samplePoseAt(Utils.fpgaToCurrentTime(timestampSeconds));
     }
-}
+
+//     public Pose3d getPose3d(){
+//         return gyro.
+//     }
+ }

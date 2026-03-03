@@ -68,7 +68,7 @@ public class IntakeSubsystem extends SubsystemBase {
   // 5:1, 5:1, 60/18 reduction
   private SmartMotorControllerConfig intakePivotSmartMotorConfig = new SmartMotorControllerConfig(this)
       .withControlMode(ControlMode.CLOSED_LOOP)
-      .withClosedLoopController(25, 0, 0, DegreesPerSecond.of(360), DegreesPerSecondPerSecond.of(360))
+      .withClosedLoopController(20, 0, 0, DegreesPerSecond.of(360), DegreesPerSecondPerSecond.of(360))
       .withFeedforward(new SimpleMotorFeedforward(0, 10, 0))
       .withTelemetry("IntakePivotMotor", TelemetryVerbosity.HIGH)
       .withGearing(new MechanismGearing(GearBox.fromReductionStages(5, 5, 60.0 / 18.0)))
@@ -77,7 +77,7 @@ public class IntakeSubsystem extends SubsystemBase {
       .withMotorInverted(false)
       .withIdleMode(MotorMode.COAST)
       .withSoftLimit(Degrees.of(0), Degrees.of(150))
-      .withStatorCurrentLimit(Amps.of(80))
+      .withStatorCurrentLimit(Amps.of(40))
       .withClosedLoopRampRate(Seconds.of(0.1))
       .withOpenLoopRampRate(Seconds.of(0.1));
 
@@ -97,8 +97,8 @@ public class IntakeSubsystem extends SubsystemBase {
   private Arm intakePivot = new Arm(intakePivotConfig);
 
   public IntakeSubsystem() {
-       config.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-       pivotMotor.getConfigurator().apply(config);
+      //  config.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
+      //  pivotMotor.getConfigurator().apply(config);
   }
   
 
@@ -141,11 +141,18 @@ public class IntakeSubsystem extends SubsystemBase {
   public Command backFeedAndRollCommand() {
     return Commands.run(() -> {
       setIntakeDeployed();
-      // smc.setDutyCycle(-INTAKE_SPEED);
     }, this).finallyDo(() -> {
       smc.setDutyCycle(0);
       setIntakeHold();
     }).withName("Intake.BackFeedAndRoll");
+  }
+
+  public Command stowCommand(){
+    return Commands.run(() -> {
+      smc.setDutyCycle(INTAKE_SPEED);
+    }, this).finallyDo(() -> {
+      setIntakeStow();
+    });
   }
 
   private void setIntakeStow() {
