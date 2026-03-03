@@ -1,4 +1,4 @@
-package frc.robot.util.maplesim;
+package frc.robot.maplesim;
 
 import java.util.List;
 
@@ -68,7 +68,7 @@ public class RebuiltOutpost extends Goal {
         Centimeters.of(10),
         "Fuel",
         isBlue ? blueOutpostPose : redOutpostPose,
-        isBlue);
+        isBlue, isBlue);
 
     this.arena = arena;
     gamePieceCount = 24;

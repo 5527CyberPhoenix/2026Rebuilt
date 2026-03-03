@@ -1,4 +1,4 @@
-package frc.robot.util.maplesim;
+package frc.robot.maplesim;
 
 import java.util.Arrays;
 import java.util.List;
@@ -76,7 +76,7 @@ public class RebuiltHub extends Goal {
         Inches.of(10),
         "Fuel",
         isBlue ? blueHubPose : redHubPose,
-        isBlue);
+        isBlue, isBlue);
 
     this.arena = arena;
     StructPublisher<Pose3d> HubPosePublisher = NetworkTableInstance.getDefault()
@@ -92,10 +92,7 @@ public class RebuiltHub extends Goal {
         + Math.pow(GamePiece.getPose3d().getZ() - position.getZ(), 2) < Math.pow(GoalRadius, 2);
   }
 
-  @Override
-  protected boolean checkRotation(GamePiece GamePiece) {
-    return true;
-  }
+  
 
   @Override
   protected void addPoints() {

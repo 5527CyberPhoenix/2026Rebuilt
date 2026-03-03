@@ -1,4 +1,4 @@
-package frc.robot.util.maplesim;
+package frc.robot.maplesim;
 
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Inches;

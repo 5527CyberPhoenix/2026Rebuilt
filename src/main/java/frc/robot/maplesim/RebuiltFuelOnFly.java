@@ -1,4 +1,4 @@
-package frc.robot.util.maplesim;
+package frc.robot.maplesim;
 
 import org.ironmaple.simulation.gamepieces.GamePieceProjectile;
 import org.ironmaple.utils.FieldMirroringUtils;

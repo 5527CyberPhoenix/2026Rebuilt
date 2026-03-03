@@ -1,4 +1,4 @@
-package frc.robot.util.maplesim;
+package frc.robot.maplesim;
 
 import org.dyn4j.geometry.Circle;
 import org.ironmaple.simulation.gamepieces.GamePieceOnFieldSimulation;
