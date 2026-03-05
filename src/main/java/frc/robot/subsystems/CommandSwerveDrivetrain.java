@@ -316,6 +316,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         return m_sysIdRoutineToApply.dynamic(direction);
     }
 
+    SwerveDrivetrain swerve;
+
     
 
     @Override
@@ -338,24 +340,50 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             });
         }
 
-         if (limelight_enabled) {
-    //   // Get MegaTag2 pose
-    //   Optional<PoseEstimate> visionEstimate = poseEstimator.getPoseEstimate();
-    //   Pose3d redHub = new Pose3d(
-    //           Meter.of(11.902),
-    //           Meter.of(4.031),
-    //           Meter.of(0.0),
-    //           new Rotation3d(0, 0, 0));
+       if (limelight_enabled) {
+      // Get MegaTag2 pose
+      Optional<PoseEstimate> visionEstimate = poseEstimator.getPoseEstimate();
 
-              
+      // If the pose is present
+      visionEstimate.ifPresent((PoseEstimate poseEstimate) -> {
+        if (poseEstimate.tagCount > 0) {
+        //   Logger.recordOutput("Limelight/Megatag2Count", poseEstimate.tagCount);
 
+        //   Logger.recordOutput("FieldSimulation/LLPose", poseEstimate.pose);
+
+          Pose3d redHub = new Pose3d(
+              Meter.of(11.902),
+              Meter.of(4.031),
+              Meter.of(0.0),
+              new Rotation3d(0, 0, 0));
+
+          distanceToHub = poseEstimate.pose.toPose2d().minus(redHub.toPose2d()).getTranslation().getNorm();
+
+        //   Logger.recordOutput("FieldSimulation/hubDiff", distanceToHub);
+            
+          // Add it to the pose estimator.
+          swerve.addVisionMeasurement(
+              poseEstimate.pose.toPose2d(),
+              poseEstimate.timestampSeconds);
+
+          // TODO: possibly add stddevs here
+          // TODO: Instead of providing the limelight's pose as is, replace the
+          // rotation
+          // component with the current pose rotation so the process doesn't take it
+          // into
+          // account?
+
+        }
+      });
+  
+       }
 
 
 
 
         
 
-    }
+    
 
 }
 
@@ -445,7 +473,5 @@ public Rotation2d getHeading(){
         return super.samplePoseAt(Utils.fpgaToCurrentTime(timestampSeconds));
     }
 
-//     public Pose3d getPose3d(){
-//         return gyro.
-//     }
+
  }

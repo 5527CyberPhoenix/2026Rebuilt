@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.subsystems.Superstructure;
+import frc.robot.commands.ShootOnTheMoveCommand;
 //import frc.robot.subsystems.SwerveSubsystem;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 
@@ -88,9 +89,9 @@ public class OperatorControls {
     controller.leftStick().whileTrue(superstructure.hopperFeedCommand());
     controller.rightStick().whileTrue(superstructure.stowIntake());
 
-    /*controller.leftBumper().toggleOnTrue(
+    controller.leftBumper().toggleOnTrue(
         new ShootOnTheMoveCommand(drivetrain, superstructure, () -> superstructure.getAimPoint())
             .ignoringDisable(true)
-            .withName("OperatorControls.aimCommand"));*/
+            .withName("OperatorControls.aimCommand"));
   }
 }
