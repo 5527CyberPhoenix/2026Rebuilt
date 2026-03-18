@@ -64,11 +64,9 @@ public class HoodSubsystem extends SubsystemBase {
     return setAngle(Degrees.of(90));
   }
 
-  public Angle getAngle() {
-    return Degrees.of(75);
-    // return hood.getAngle();
-  }
-
+   public Angle getAngle() {
+     return Degrees.of(75);
+   }
   public Command set(double dutyCycle) {
     return Commands.runOnce(() -> {
     });

@@ -265,6 +265,21 @@ public class Superstructure extends SubsystemBase {
         .withName("Superstructure.rezeroIntakePivotAndTurret");
   }
 
+  public Command zeroTurretCommand(){
+    return turret.rezero().withName("Zero Turret");
+  }
+
+  public Command manualTurret(){
+    return turret.set(.2);
+  }
+
+  public Command backTurret(){
+    return turret.set(-.2);
+  }
+
+  // public Command AutoAim(){
+  //   return turret.turretEstimate().withName("AutoAim");
+  // }
 
   @Override
   public void periodic() {

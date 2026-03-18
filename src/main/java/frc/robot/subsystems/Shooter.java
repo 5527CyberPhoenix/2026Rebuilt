@@ -30,6 +30,8 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
+import edu.wpi.first.util.sendable.Sendable;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.TalonIDs;
@@ -89,7 +91,7 @@ public class Shooter extends SubsystemBase {
   }
 
   public Command spinUp() {
-      return setSpeed(RPM.of(5500));
+      return setSpeed(RPM.of(3600));//Was 5500
     }
 
   public Command stop() {
@@ -105,6 +107,7 @@ public class Shooter extends SubsystemBase {
   }
   @Override
   public void periodic() {
+    SmartDashboard.putNumber("ShooterVelocity", motor1.getVelocity().getValueAsDouble() * 60);
     //Logger.recordOutput("Shooter/LeaderVelocity",  motor1.getVelocity());
     //Logger.recordOutput("Shooter/FollowerVelocity", motor2.getVelocity());
   }

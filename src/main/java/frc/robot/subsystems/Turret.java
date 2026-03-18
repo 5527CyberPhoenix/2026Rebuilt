@@ -29,6 +29,7 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.LimelightHelpers;
 import frc.robot.Constants.TalonIDs;
 import yams.gearing.GearBox;
 import yams.gearing.MechanismGearing;
@@ -73,10 +74,10 @@ public class Turret extends SubsystemBase {
     private Pivot turret = new Pivot(turretConfig);
   
    public Turret() {
-      config
-      .Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
+      // config
+      // .Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
       
-        motor.getConfigurator().apply(config);
+      //   motor.getConfigurator().apply(config);
    }
 
   public Command setAngle(Angle angle){
@@ -94,7 +95,7 @@ public class Turret extends SubsystemBase {
    public Angle getRobotAdjustedAngle() {
     // Returns the turret angle in the robot's coordinate frame
     // since the turret is mounted backwards, we need to add 180 degrees
-    return turret.getAngle().plus(Degrees.of(180));
+    return turret.getAngle();
   }
 
     public Angle getRawAngle() {
@@ -113,9 +114,19 @@ public class Turret extends SubsystemBase {
     return turret.sysId(Volts.of(7), Volts.of(2).per(Second), Seconds.of(10));
   }
  
+  public Command turretEstimate(){
+    var ll = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight-cyber");
+
+    if(ll != null && ll.tagCount > 0){
+      return turret.setAngle(Degrees.of(LimelightHelpers.getTX("limelight-cyber")));
+    }
+    else{
+      return null;
+    }
+  }
   @Override
   public void periodic() {
-    // turret.updateTelemetry();
+    turret.updateTelemetry();
 
     // Logger.recordOutput("ASCalibration/FinalComponentPoses", new Pose3d[] {
     //     new Pose3d(

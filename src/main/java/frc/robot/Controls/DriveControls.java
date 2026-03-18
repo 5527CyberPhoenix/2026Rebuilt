@@ -45,9 +45,9 @@ public class DriveControls {
           controller.rightBumper()
               .whileTrue(superstructure.setIntakeDeployAndRoll().withName("OperatorControls.intakeDeployed"));
     
-          controller.leftTrigger().whileTrue(Commands.repeatingSequence(
-            fireFuel(drivetrain, superstructure),
-        Commands.waitSeconds(.1)));
+        //   controller.leftTrigger().whileTrue(Commands.repeatingSequence(
+        //     fireFuel(drivetrain, superstructure),
+        // Commands.waitSeconds(.1)));
         
 
 
@@ -58,11 +58,11 @@ public class DriveControls {
       SimulatedArena arena = SimulatedArena.getInstance();
 
       RebuiltFuelOnFly fuel = new RebuiltFuelOnFly(
-          drivetrain.getPose(drivetrain).getTranslation(),
+          drivetrain.getPose().getTranslation(),
           new Translation2d(
               superstructure.turret.turretPose.getX() * -1,
               superstructure.turret.turretPose.getY()),
-          drivetrain.getSpeed(drivetrain), drivetrain.getPose(drivetrain).getRotation().rotateBy(superstructure.getAimRotation3d().toRotation2d()),
+          drivetrain.getSpeed(), drivetrain.getPose().getRotation().rotateBy(superstructure.getAimRotation3d().toRotation2d()),
           superstructure.turret.turretPose.getMeasureZ(),
 
           // 0.5 times because we're applying spin to the fuel as we shoot it

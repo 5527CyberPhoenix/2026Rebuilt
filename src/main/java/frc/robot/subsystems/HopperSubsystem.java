@@ -35,7 +35,7 @@ public class HopperSubsystem extends SubsystemBase {
       .withGearing(new MechanismGearing(GearBox.fromReductionStages(4))) // 4:1 gear reduction
       .withMotorInverted(true)
       .withIdleMode(MotorMode.COAST)
-      .withStatorCurrentLimit(Amps.of(80));
+      .withStatorCurrentLimit(Amps.of(60));
 
   private SmartMotorController smc = new TalonFXWrapper(motor, DCMotor.getKrakenX60(1), smcConfig);
 
@@ -78,7 +78,7 @@ public class HopperSubsystem extends SubsystemBase {
 
   @Override
   public void periodic() {
-   // hopper.updateTelemetry();
+    hopper.updateTelemetry();
   }
 
   @Override

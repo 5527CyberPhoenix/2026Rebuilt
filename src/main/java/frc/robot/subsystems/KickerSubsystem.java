@@ -25,6 +25,8 @@ public class KickerSubsystem extends SubsystemBase {
 
   private static final double KICKER_SPEED = 1.0;
 
+
+
   // Nova motor controller with NEO motor
   private TalonFX motor = new TalonFX(Constants.TalonIDs.kickerMotor,"CAN");
 
@@ -48,7 +50,7 @@ public class KickerSubsystem extends SubsystemBase {
   private FlyWheel kicker = new FlyWheel(kickerConfig);
 
   public KickerSubsystem() {
-  }
+ }
 
   /**
    * Command to run the kicker forward while held, stops when released.
@@ -66,7 +68,7 @@ public class KickerSubsystem extends SubsystemBase {
 
   @Override
   public void periodic() {
-   // kicker.updateTelemetry();
+    kicker.updateTelemetry();
   }
 
   @Override

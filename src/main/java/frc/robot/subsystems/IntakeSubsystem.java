@@ -2,11 +2,6 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
-import com.revrobotics.spark.SparkMax;
-import com.revrobotics.spark.SparkLowLevel.MotorType;
-
-import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.system.plant.DCMotor;
 import static edu.wpi.first.units.Units.Amps;
@@ -34,14 +29,12 @@ import yams.motorcontrollers.SmartMotorControllerConfig;
 import yams.motorcontrollers.SmartMotorControllerConfig.ControlMode;
 import yams.motorcontrollers.SmartMotorControllerConfig.MotorMode;
 import yams.motorcontrollers.SmartMotorControllerConfig.TelemetryVerbosity;
-import yams.motorcontrollers.local.NovaWrapper;
-import yams.motorcontrollers.local.SparkWrapper;
 import yams.motorcontrollers.remote.TalonFXWrapper;
 
 public class IntakeSubsystem extends SubsystemBase {
   private TalonFXConfiguration config = new TalonFXConfiguration();
 
-  private static final double INTAKE_SPEED = 1.0;
+  private static final double INTAKE_SPEED = .7;
 
   // ThriftyNova controlling the intake roller
   private TalonFX rollerMotor = new TalonFX(Constants.TalonIDs.IntakeSpin,"CAN");
@@ -52,7 +45,7 @@ public class IntakeSubsystem extends SubsystemBase {
       .withGearing(new MechanismGearing(GearBox.fromReductionStages(3))) // Direct drive, adjust if geared
       .withMotorInverted(true)
       .withIdleMode(MotorMode.COAST)
-      .withStatorCurrentLimit(Amps.of(100));
+      .withStatorCurrentLimit(Amps.of(40));
 
   private SmartMotorController smc = new TalonFXWrapper(rollerMotor, DCMotor.getKrakenX44(1), smcConfig);
 
@@ -69,7 +62,7 @@ public class IntakeSubsystem extends SubsystemBase {
   private SmartMotorControllerConfig intakePivotSmartMotorConfig = new SmartMotorControllerConfig(this)
       .withControlMode(ControlMode.CLOSED_LOOP)
       .withClosedLoopController(20, 0, 0, DegreesPerSecond.of(360), DegreesPerSecondPerSecond.of(360))
-      .withFeedforward(new SimpleMotorFeedforward(0, 10, 0))
+      .withFeedforward(new SimpleMotorFeedforward(0, 13, 0))
       .withTelemetry("IntakePivotMotor", TelemetryVerbosity.HIGH)
       .withGearing(new MechanismGearing(GearBox.fromReductionStages(5, 5, 60.0 / 18.0)))
       // .withGearing(new MechanismGearing(GearBox.fromReductionStages(5, 5, 60.0 /
@@ -149,14 +142,14 @@ public class IntakeSubsystem extends SubsystemBase {
 
   public Command stowCommand(){
     return Commands.run(() -> {
-      smc.setDutyCycle(INTAKE_SPEED);
+ setIntakeStow();
     }, this).finallyDo(() -> {
-      setIntakeStow();
+    
     });
   }
 
   private void setIntakeStow() {
-    intakePivotController.setPosition(Degrees.of(0));
+    intakePivotController.setPosition(Degrees.of(5));
   }
 
   private void setIntakeFeed() {
@@ -164,17 +157,17 @@ public class IntakeSubsystem extends SubsystemBase {
   }
 
   private void setIntakeHold() {
-    intakePivotController.setPosition(Degrees.of(115));
+    intakePivotController.setPosition(Degrees.of(90));
   }
 
   private void setIntakeDeployed() {
-    intakePivotController.setPosition(Degrees.of(148));
+    intakePivotController.setPosition(Degrees.of(150));
   }
 
   @Override
   public void periodic() {
-    // intake.updateTelemetry();
-    // intakePivot.updateTelemetry();
+     intake.updateTelemetry();
+     intakePivot.updateTelemetry();
   }
 
   @Override

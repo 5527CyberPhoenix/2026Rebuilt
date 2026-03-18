@@ -55,7 +55,7 @@ public class RebuiltFuelOnFly extends GamePieceProjectile {
         super.withTargetPosition(
                 () -> FieldMirroringUtils.toCurrentAllianceTranslation(new Translation3d(11.938, 4.034536, 1.5748)));
 
-        Logger.recordOutput("HubGoal", new Translation3d(11.938, 4.034536, 1.5748));
+        //Logger.recordOutput("HubGoal", new Translation3d(11.938, 4.034536, 1.5748));
 
         super.withTargetTolerance(
                 new Translation3d(

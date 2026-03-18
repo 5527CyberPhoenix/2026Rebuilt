@@ -49,7 +49,7 @@ public class ShootOnTheMoveCommand extends Command {
   public void initialize() {
     super.initialize();
 
-    latestHoodAngle = superstructure.getHoodAngle();
+   // latestHoodAngle = superstructure.getHoodAngle();
     latestTurretAngle = superstructure.getTurretAngle();
     latestShootSpeed = superstructure.getShooterSpeed();
 
@@ -77,7 +77,7 @@ public class ShootOnTheMoveCommand extends Command {
     // Calculate trajectory to aimPoint
     var target = aimPointSupplier.get();
 
-    var shooterLocation = drivetrain.getPose3d(null).getTranslation()
+    var shooterLocation = drivetrain.getPose3d().getTranslation()
         .plus(superstructure.getShooterPose().getTranslation());
 
     // Ignore this parameter for now, the range tables will account for it :/
@@ -96,17 +96,17 @@ public class ShootOnTheMoveCommand extends Command {
     // of flight.
     // If we're stationary, this should be zero. If we're backing up, this will be
     // "ahead" of the target, etc.
-    var updatedPosition = drivetrain.getSpeed(drivetrain).times(timeOfFlight);
+    var updatedPosition = drivetrain.getSpeed().times(timeOfFlight);
     var correctiveVector = new Translation2d(updatedPosition.vxMetersPerSecond, updatedPosition.vyMetersPerSecond)
         .unaryMinus();
     var correctiveVector3d = new Translation3d(correctiveVector.getX(), correctiveVector.getY(), 0);
 
-    Logger.recordOutput("FieldSimulation/AimTargetCorrected",
-        new Pose3d(target.plus(correctiveVector3d), Rotation3d.kZero));
+    // Logger.recordOutput("FieldSimulation/AimTargetCorrected",
+    //     new Pose3d(target.plus(correctiveVector3d), Rotation3d.kZero));
 
     var correctedTarget = targetOnGround.plus(correctiveVector);
 
-    var vectorToTarget = drivetrain.getPose(drivetrain).getTranslation().minus(correctedTarget);
+    var vectorToTarget = drivetrain.getPose().getTranslation().minus(correctedTarget);
 
     var correctedDistance = Meters.of(vectorToTarget.getNorm());
     var calculatedHeading = vectorToTarget.getAngle()
@@ -123,7 +123,7 @@ public class ShootOnTheMoveCommand extends Command {
     // TODO: add this back if/when we have a real hood, for now, just set it to the
     // current angle
     // latestHoodAngle = calculateRequiredHoodAngle(correctedDistance);
-    latestHoodAngle = superstructure.getHoodAngle();
+    //latestHoodAngle = superstructure.getHoodAngle();
 
     superstructure.setShooterSetpoints(
         latestShootSpeed,

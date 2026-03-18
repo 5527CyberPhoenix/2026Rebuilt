@@ -13,6 +13,10 @@ import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.ctre.phoenix6.swerve.SwerveRequest.ApplyFieldSpeeds;
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.config.PIDConstants;
+import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.estimator.PoseEstimator;
@@ -22,6 +26,7 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
@@ -30,6 +35,8 @@ import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -71,6 +78,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private static final Rotation2d kRedAlliancePerspectiveRotation = Rotation2d.k180deg;
     /* Keep track if we've ever applied the operator perspective before or not */
     private boolean m_hasAppliedOperatorPerspective = false;
+        private final SwerveRequest.ApplyRobotSpeeds m_pathApplyRobotSpeeds = new SwerveRequest.ApplyRobotSpeeds();
 
     /* Swerve requests to apply during SysId characterization */
     private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization = new SwerveRequest.SysIdSwerveTranslation();
@@ -166,6 +174,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         if (Utils.isSimulation()) {
             startSimThread();
         }
+       // configureAutoBuilder();
     }
 
    public void swerve(){
@@ -249,6 +258,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         if (Utils.isSimulation()) {
             startSimThread();
         }
+        //configureAutoBuilder();
     }
 
     /**
@@ -281,7 +291,37 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         if (Utils.isSimulation()) {
             startSimThread();
         }
+       // configureAutoBuilder();
     }
+
+    // private void configureAutoBuilder() {
+    //     try {
+    //         var config = RobotConfig.fromGUISettings();
+    //         AutoBuilder.configure(
+    //             () -> getState().Pose,   // Supplier of current robot pose
+    //             this::resetPose,         // Consumer for seeding pose against auto
+    //             () -> getState().Speeds, // Supplier of current robot speeds
+    //             // Consumer of ChassisSpeeds and feedforwards to drive the robot
+    //             (speeds, feedforwards) -> setControl(
+    //                 m_pathApplyRobotSpeeds.withSpeeds(speeds)
+    //                     .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
+    //                     .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons())
+    //             ),
+    //             new PPHolonomicDriveController(
+    //                 // PID constants for translation
+    //                 new PIDConstants(10, 0, 0),
+    //                 // PID constants for rotation
+    //                 new PIDConstants(7, 0, 0)
+    //             ),
+    //             config,
+    //             // Assume the path needs to be flipped for Red vs Blue, this is normally the case
+    //             () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
+    //             this // Subsystem for requirements
+    //         );
+    //     } catch (Exception ex) {
+    //         DriverStation.reportError("Failed to load PathPlanner config and configure AutoBuilder", ex.getStackTrace());
+    //     }
+    // }
 
     /**
      * Returns a command that applies the specified control request to this swerve drivetrain.
@@ -316,12 +356,14 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         return m_sysIdRoutineToApply.dynamic(direction);
     }
 
-    SwerveDrivetrain swerve;
+    public final Field2d field = new Field2d();
 
     
 
     @Override
     public void periodic() {
+        field.setRobotPose(getPose());
+        SmartDashboard.putData("FieldMap",field);
         /*
          * Periodically try to apply the operator perspective.
          * If we haven't applied the operator perspective before, then we should apply it regardless of DS state.
@@ -340,66 +382,48 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             });
         }
 
-       if (limelight_enabled) {
-      // Get MegaTag2 pose
-      Optional<PoseEstimate> visionEstimate = poseEstimator.getPoseEstimate();
+         if (limelight_enabled) {
+    //   // Get MegaTag2 pose
+    //   Optional<PoseEstimate> visionEstimate = poseEstimator.getPoseEstimate();
+    //   Pose3d redHub = new Pose3d(
+    //           Meter.of(11.902),
+    //           Meter.of(4.031),
+    //           Meter.of(0.0),
+    //           new Rotation3d(0, 0, 0));
 
-      // If the pose is present
-      visionEstimate.ifPresent((PoseEstimate poseEstimate) -> {
-        if (poseEstimate.tagCount > 0) {
-        //   Logger.recordOutput("Limelight/Megatag2Count", poseEstimate.tagCount);
-
-        //   Logger.recordOutput("FieldSimulation/LLPose", poseEstimate.pose);
-
-          Pose3d redHub = new Pose3d(
-              Meter.of(11.902),
-              Meter.of(4.031),
-              Meter.of(0.0),
-              new Rotation3d(0, 0, 0));
-
-          distanceToHub = poseEstimate.pose.toPose2d().minus(redHub.toPose2d()).getTranslation().getNorm();
-
-        //   Logger.recordOutput("FieldSimulation/hubDiff", distanceToHub);
-            
-          // Add it to the pose estimator.
-          swerve.addVisionMeasurement(
-              poseEstimate.pose.toPose2d(),
-              poseEstimate.timestampSeconds);
-
-          // TODO: possibly add stddevs here
-          // TODO: Instead of providing the limelight's pose as is, replace the
-          // rotation
-          // component with the current pose rotation so the process doesn't take it
-          // into
-          // account?
-
-        }
-      });
-  
-       }
-
-
-
-
-        
-
-    
-
-}
-
-public Pose2d getPose(SwerveDrivetrain drivetrain){
-    return drivetrain.getState().Pose;
-  
+    }
 
 }
 
 
-public ChassisSpeeds getSpeed(SwerveDrivetrain drivetrain){
-    return drivetrain.getState().Speeds;
+public Pose2d getPose(){
+    var state = this.getState();
+    Pose2d pose = new Pose2d(
+        state.Pose.getX(), state.Pose.getY(),gyro.getRotation2d()
+    );
+    return pose;
 }
 
-public Pose3d getPose3d(SwerveDrivePoseEstimator3d estimate){
-    return estimate.getEstimatedPosition();
+
+public ChassisSpeeds getSpeed(){
+    var state = this.getState();
+    new ChassisSpeeds();
+    ChassisSpeeds speed = ChassisSpeeds.fromFieldRelativeSpeeds(
+    state.Speeds.vxMetersPerSecond,
+     state.Speeds.vyMetersPerSecond,
+     state.Speeds.omegaRadiansPerSecond,
+     gyro.getRotation2d()
+    );
+    return speed;
+}
+
+public Pose3d getPose3d(){
+    var state = this.getState();
+    Pose3d pose = new Pose3d(
+        new Translation3d(state.Pose.getX(),state.Pose.getY(),0),
+        gyro.getRotation3d()
+    );
+ return pose;
 }
 
 public Rotation2d getHeading(){
@@ -473,5 +497,7 @@ public Rotation2d getHeading(){
         return super.samplePoseAt(Utils.fpgaToCurrentTime(timestampSeconds));
     }
 
-
+//     public Pose3d getPose3d(){
+//         return gyro.
+//     }
  }

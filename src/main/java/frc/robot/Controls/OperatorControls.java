@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.subsystems.Superstructure;
+import frc.robot.commands.PhoenixCannon;
 import frc.robot.commands.ShootOnTheMoveCommand;
 //import frc.robot.subsystems.SwerveSubsystem;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
@@ -83,15 +84,20 @@ public class OperatorControls {
     controller.povUp().onTrue(superstructure.setTurretForward().withName("OperatorControls.setTurretForward"));
     controller.povLeft().onTrue(superstructure.setTurretLeft().withName("OperatorControls.setTurretLeft"));
     controller.povRight().onTrue(superstructure.setTurretRight().withName("OperatorControls.setTurretRight"));
+    controller.povDown().onTrue(superstructure.zeroTurretCommand().withName("Zero Turret"));
 
-    controller.leftTrigger().whileTrue(superstructure.kickerFeedCommand());
+    controller.leftTrigger().whileTrue(superstructure.intakeCommand());
     controller.rightTrigger().whileTrue(superstructure.setIntakeDeployAndRoll());
-    controller.leftStick().whileTrue(superstructure.hopperFeedCommand());
-    controller.rightStick().whileTrue(superstructure.stowIntake());
+    controller.leftStick().whileTrue(superstructure.manualTurret());
+    controller.rightStick().whileTrue(superstructure.backTurret());
 
-    controller.leftBumper().toggleOnTrue(
-        new ShootOnTheMoveCommand(drivetrain, superstructure, () -> superstructure.getAimPoint())
-            .ignoringDisable(true)
-            .withName("OperatorControls.aimCommand"));
+   controller.leftBumper().toggleOnTrue(
+       new ShootOnTheMoveCommand(drivetrain, superstructure, () -> superstructure.getAimPoint())
+           .ignoringDisable(true)
+           .withName("OperatorControls.aimCommand"));
+
+    // controller.leftBumper().toggleOnTrue(
+    //     new PhoenixCannon()
+    // );
   }
 }
