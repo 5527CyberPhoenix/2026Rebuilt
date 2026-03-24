@@ -10,31 +10,40 @@ import static edu.wpi.first.units.Units.RPM;
 
 import java.util.function.Supplier;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.LinearVelocity;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants;
+import frc.robot.Constants.FieldConstants;
+import frc.robot.util.HubTracker;
 
 public class Superstructure extends SubsystemBase {
-  
    public final Shooter shooter;
    public final Turret turret;
    public final IntakeSubsystem intake;
    public final KickerSubsystem kicker;  
    public final HopperSubsystem hopper; 
    public final HoodSubsystem hood;
+  Supplier<Pose2d> poseSupplier;
+
 
    //Tolerance for setpoint checks
    private static final AngularVelocity shooterTolerance = RPM.of(100);
    private static final Angle turretTolerance = Degrees.of(1);
     private static final Angle HOOD_TOLERANCE = Degrees.of(2);
+    public final Trigger activeHubTrigger = new Trigger(HubTracker::isActive).or(() -> HubTracker.getMatchTime() < 0);
+
+    private boolean m_isAligned = false;
 
    
    //Triggers for readiness
@@ -51,13 +60,14 @@ public class Superstructure extends SubsystemBase {
 
   /** Creates a new Superstructure. */
   public Superstructure(Shooter shooter, Turret turret, IntakeSubsystem intake, KickerSubsystem kicker,
-  HopperSubsystem hopper, HoodSubsystem hood) {    
+  HopperSubsystem hopper, HoodSubsystem hood,Supplier<Pose2d> poseSupplier ) {    
     this.turret = turret;
     this.kicker = kicker;
     this.intake = intake;
     this.shooter = shooter;
     this.hopper = hopper;
     this.hood = hood;
+    this.poseSupplier = poseSupplier;
 
     //Create triggers to check if mechs are on target
     this.isShooterOnTarget = new Trigger(
@@ -70,6 +80,24 @@ public class Superstructure extends SubsystemBase {
      this.readyToShoot = isShooterOnTarget.and(turretOnTarget);
 
     }
+
+     
+
+    public void setAligned(boolean isAligned) {
+        m_isAligned = isAligned;
+    }
+
+    public boolean isAligned() {
+        return m_isAligned;
+    }
+   
+     public boolean inAllianceZone() {
+        Pose2d pose = poseSupplier.get();
+        boolean isBlue = DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Blue;
+        return isBlue && pose.getMeasureX().lt(FieldConstants.ALLIANCE_ZONE)
+                || !isBlue && pose.getMeasureX().gt(FieldConstants.FIELD_LENGTH.minus(FieldConstants.ALLIANCE_ZONE));
+    }
+
 
      public Command stopAllCommand() {
     return Commands.parallel(
@@ -277,6 +305,10 @@ public class Superstructure extends SubsystemBase {
     return turret.set(-.2);
   }
 
+  public Command KickerandHopper(){
+    return Commands.parallel(kicker.feedCommand(),
+    hopper.feedCommand()); 
+  }
   // public Command AutoAim(){
   //   return turret.turretEstimate().withName("AutoAim");
   // }

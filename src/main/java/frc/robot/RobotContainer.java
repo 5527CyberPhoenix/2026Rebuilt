@@ -6,11 +6,14 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
 
+import java.util.function.Supplier;
+
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -29,17 +32,19 @@ import frc.robot.subsystems.HopperSubsystem;
 import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.KickerSubsystem;
 import frc.robot.subsystems.Shooter;
+import frc.robot.subsystems.ShooterSubsystem;
 import frc.robot.subsystems.Superstructure;
 import frc.robot.subsystems.Turret;
 
 public class RobotContainer {
+    public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
     private final Turret turret = new Turret();
     private final Shooter shooter = new Shooter();
     private final HopperSubsystem hopper = new HopperSubsystem();
     private final IntakeSubsystem intake = new IntakeSubsystem();
     private final KickerSubsystem kicker = new KickerSubsystem();
     private final HoodSubsystem hood = new HoodSubsystem();
-    private final Superstructure superstructure = new Superstructure(shooter, turret, intake, kicker, hopper, hood);
+    private final Superstructure superstructure = new Superstructure(shooter, turret, intake, kicker, hopper, hood, () -> drivetrain.getState().Pose);
     private double MaxSpeed = 1.0 * TunerConstants.kSpeedAt12Volts.in(MetersPerSecond); // kSpeedAt12Volts desired top speed
     private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max angular velocity
 
@@ -54,11 +59,20 @@ public class RobotContainer {
 
     private final CommandXboxController joystick = new CommandXboxController(0);
 
-    public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
+        private final ShooterSubsystem shooters = new ShooterSubsystem(drivetrain, Constants.LimelightConstants.LIMELIGHT_NAME);
+
 
     // private final SendableChooser<Command> autoChooser;
 
     public RobotContainer() {
+          LimelightHelpers.setCameraPose_RobotSpace(
+                                Constants.LimelightConstants.LIMELIGHT_NAME,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0.0,
+                                0.0);
         // autoChooser = AutoBuilder.buildAutoChooser("Tests");
         // SmartDashboard.putData("Chosen Auto", autoChooser);
 
@@ -74,8 +88,8 @@ public class RobotContainer {
         drivetrain.setDefaultCommand(
             // Drivetrain will execute this command periodically
             drivetrain.applyRequest(() ->
-                drive.withVelocityX(-joystick.getLeftY() * MaxSpeed * .75) // Drive forward with negative Y (forward)
-                    .withVelocityY(-joystick.getLeftX() * MaxSpeed * .75) // Drive left with negative X (left)
+                drive.withVelocityX(-joystick.getLeftY() * MaxSpeed * .5) // Drive forward with negative Y (forward)
+                    .withVelocityY(-joystick.getLeftX() * MaxSpeed * .5) // Drive left with negative X (left)
                     .withRotationalRate(-joystick.getRightX() * MaxAngularRate) // Drive counterclockwise with negative X (left)
             )
         );
@@ -104,11 +118,11 @@ public class RobotContainer {
 
         drivetrain.registerTelemetry(logger::telemeterize);
         DriveControls.configure(0,drivetrain, superstructure);
-        OperatorControls.configure(1, drivetrain, superstructure);
+        OperatorControls.configure(1, drivetrain, superstructure, shooters);
     }
 
     public Command getAutonomousCommand() {
        // Run selected auton from auto chooser
-       return getAutonomousCommand();
+       return Commands.none();
     }
 }

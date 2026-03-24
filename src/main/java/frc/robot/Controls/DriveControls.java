@@ -10,6 +10,7 @@ import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.seasonspecific.rebuilt2026.RebuiltFuelOnFly;
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -17,33 +18,57 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.Constants;
+import frc.robot.commands.AutoAlignCommand;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.Superstructure;
+import frc.robot.util.AllianceUtil;
 
 
 /** Add your docs here. */
 public class DriveControls {
-    static CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
-      private static Pose2d getTargetPose() {
-        Pose2d hubPose = new Pose2d(
-            Meter.of(11.902),
-            Meter.of(4.031),
-            Rotation2d.kZero);
-    
-        //Logger.recordOutput("DriverControls/TargetHubPose", hubPose);
-    
-        return hubPose;
-      }
-    
-        public static void configure(int port,CommandSwerveDrivetrain drivetrain, Superstructure superstructure) {
-        CommandXboxController controller = new CommandXboxController(port);
-            controller.leftBumper().whileTrue(
-              superstructure.feedAllCommand()
-                  .finallyDo(() -> superstructure.stopFeedingAllCommand().schedule()));
-    
-          controller.rightBumper()
-              .whileTrue(superstructure.setIntakeDeployAndRoll().withName("OperatorControls.intakeDeployed"));
+          static CommandXboxController controller = new CommandXboxController(Constants.OperatorConstants.kDriverControllerPort);
+          
+              static CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
+                private static Pose2d getTargetPose() {
+                  Pose2d hubPose = new Pose2d(
+                      Meter.of(11.902),
+                      Meter.of(4.031),
+                      Rotation2d.kZero);
+              
+                  //Logger.recordOutput("DriverControls/TargetHubPose", hubPose);
+              
+                  return hubPose;
+                }
+                         
+              public static double getDriveX() {
+                      return -MathUtil.applyDeadband(controller.getLeftY(), Constants.DriveConstants.DEADBAND);
+                  }
+              
+                  public static double getDriveY() {
+                          return -MathUtil.applyDeadband(controller.getLeftX(), Constants.DriveConstants.DEADBAND);
+            }
+        
+            public double getDriveOmega() {
+                return -MathUtil.applyDeadband(controller.getRightX(), Constants.DriveConstants.DEADBAND);
+            }
+        
+            
+                public static void configure(int port,CommandSwerveDrivetrain drivetrain, Superstructure superstructure) {
+                CommandXboxController controller = new CommandXboxController(port);
+        
+                    controller.leftBumper().whileTrue(
+                      superstructure.feedAllCommand()
+                          .finallyDo(() -> superstructure.stopFeedingAllCommand().schedule()));
+            controller.y().whileTrue(
+            new AutoAlignCommand(drivetrain, () -> Rotation2d.fromDegrees(AllianceUtil.getTargetHeadingToHub(drivetrain, Constants.LimelightConstants.LIMELIGHT_NAME)), () -> getDriveX(), () -> getDriveY(), superstructure::setAligned)); 
+
+                 
+                  
+
+          //controller.x().whileTrue(new AutoAlignCommand(drivetrain, () -> Rotation2d.kZero, () -> 0.0, () -> 0.0));
     
         //   controller.leftTrigger().whileTrue(Commands.repeatingSequence(
         //     fireFuel(drivetrain, superstructure),

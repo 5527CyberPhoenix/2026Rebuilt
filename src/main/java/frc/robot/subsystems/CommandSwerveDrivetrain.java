@@ -19,6 +19,7 @@ import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 
 import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.estimator.PoseEstimator;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator3d;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -44,7 +45,8 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-
+import frc.robot.Constants;
+import frc.robot.LimelightHelpers;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 import limelight.Limelight;
 import limelight.networktables.AngularVelocity3d;
@@ -356,13 +358,22 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         return m_sysIdRoutineToApply.dynamic(direction);
     }
 
-    public final Field2d field = new Field2d();
+    private final Field2d field = new Field2d();
 
-    
+
 
     @Override
     public void periodic() {
-        field.setRobotPose(getPose());
+         var state = this.getState();
+  SwerveDriveOdometry swerve = new SwerveDriveOdometry(
+  getKinematics(), 
+  gyro.getRotation2d(), 
+  state.ModulePositions);
+
+  swerve.update(
+    gyro.getRotation2d(),
+    state.ModulePositions);
+        field.setRobotPose(frc.robot.LimelightHelpers.getBotPoseEstimate_wpiBlue(Constants.LimelightConstants.LIMELIGHT_NAME).pose);
         SmartDashboard.putData("FieldMap",field);
         /*
          * Periodically try to apply the operator perspective.
@@ -381,18 +392,53 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 m_hasAppliedOperatorPerspective = true;
             });
         }
+                updateVisionMeasurement();
 
-         if (limelight_enabled) {
-    //   // Get MegaTag2 pose
-    //   Optional<PoseEstimate> visionEstimate = poseEstimator.getPoseEstimate();
-    //   Pose3d redHub = new Pose3d(
-    //           Meter.of(11.902),
-    //           Meter.of(4.031),
-    //           Meter.of(0.0),
-    //           new Rotation3d(0, 0, 0));
+}
 
+    private void updateVisionMeasurement() {
+        var visionEst = LimelightHelpers.getBotPoseEstimate_wpiBlue(Constants.LimelightConstants.LIMELIGHT_NAME);
+
+        if (visionEst.tagCount > 0) {
+            double xyStdDev = 0.7;
+            double degStdDev = 0.7;
+            if (visionEst.tagCount >= 2) {
+                xyStdDev = 0.1;
+                degStdDev = 0.1;
+            } else if (visionEst.avgTagDist < 4.0) {
+                xyStdDev = 0.3;
+                degStdDev = 0.3;
+            }
+
+            setVisionMeasurementStdDevs(VecBuilder.fill(xyStdDev, xyStdDev, degStdDev));
+            addVisionMeasurement(visionEst.pose, visionEst.timestampSeconds);
+        }
     }
 
+    public boolean isValidAllianceTag(int tagId) {
+        Optional<Alliance> alliance = DriverStation.getAlliance();
+
+        if (alliance.isEmpty()) {
+            return false;
+        }
+
+        return alliance.get() == Alliance.Red
+                ? Constants.LimelightConstants.RED_HUB_TAGS.contains(tagId)
+                : Constants.LimelightConstants.BLUE_HUB_TAGS.contains(tagId);
+    }
+
+
+public void odometry(){
+  var state = this.getState();
+  SwerveDriveOdometry swerve = new SwerveDriveOdometry(
+  getKinematics(), 
+  gyro.getRotation2d(), 
+  state.ModulePositions);
+
+  swerve.update(
+    gyro.getRotation2d(),
+    state.ModulePositions);
+    
 }
 
 
@@ -404,6 +450,10 @@ public Pose2d getPose(){
     return pose;
 }
 
+public Pose2d getPoseRelativetoLimelight(){
+ var ll = frc.robot.LimelightHelpers.getBotPose2d_wpiBlue(Constants.LimelightConstants.LIMELIGHT_NAME);
+ return ll;
+}
 
 public ChassisSpeeds getSpeed(){
     var state = this.getState();
@@ -426,9 +476,11 @@ public Pose3d getPose3d(){
  return pose;
 }
 
+
 public Rotation2d getHeading(){
     return gyro.getRotation2d();
 }
+
 
 // SwerveRequest.ApplyFieldSpeeds fieldSpeeds = new ApplyFieldSpeeds();
 
@@ -463,6 +515,7 @@ public Rotation2d getHeading(){
     public void addVisionMeasurement(Pose2d visionRobotPoseMeters, double timestampSeconds) {
         super.addVisionMeasurement(visionRobotPoseMeters, Utils.fpgaToCurrentTime(timestampSeconds));
     }
+    
 
     /**
      * Adds a vision measurement to the Kalman Filter. This will correct the odometry pose estimate

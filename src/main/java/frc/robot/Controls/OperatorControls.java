@@ -15,16 +15,18 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.subsystems.Superstructure;
 import frc.robot.commands.PhoenixCannon;
+import frc.robot.commands.ShootAtDistance;
 import frc.robot.commands.ShootOnTheMoveCommand;
 //import frc.robot.subsystems.SwerveSubsystem;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
+import frc.robot.subsystems.ShooterSubsystem;
 
 
 public class OperatorControls {
     
   public static final boolean MACOS_WEIRD_CONTROLLER = true;
 
-  public static void configure(int port, CommandSwerveDrivetrain drivetrain, Superstructure superstructure) {
+  public static void configure(int port, CommandSwerveDrivetrain drivetrain, Superstructure superstructure, ShooterSubsystem shooters) {
     CommandXboxController controller = new CommandXboxController(port);
 
     // if (Robot.isSimulation()) {
@@ -67,8 +69,8 @@ public class OperatorControls {
     // REAL CONTROLS
     controller.start().onTrue(superstructure.rezeroIntakePivotAndTurretCommand().ignoringDisable(true));
 
-    controller.rightBumper()
-        .whileTrue(superstructure.setIntakeDeployAndRoll().withName("OperatorControls.intakeDeployed"));
+    // controller.rightBumper()
+    //     .whileTrue(superstructure.setIntakeDeployAndRoll().withName("OperatorControls.intakeDeployed"));
 
     controller.y().onTrue(superstructure.shootCommand());
     controller.x().whileTrue(superstructure.stopShootingCommand());
@@ -86,15 +88,29 @@ public class OperatorControls {
     controller.povRight().onTrue(superstructure.setTurretRight().withName("OperatorControls.setTurretRight"));
     controller.povDown().onTrue(superstructure.zeroTurretCommand().withName("Zero Turret"));
 
-    controller.leftTrigger().whileTrue(superstructure.intakeCommand());
+    controller.leftTrigger().whileTrue(superstructure.stowIntake());
     controller.rightTrigger().whileTrue(superstructure.setIntakeDeployAndRoll());
-    controller.leftStick().whileTrue(superstructure.manualTurret());
+    controller.rightBumper().whileTrue(superstructure.KickerandHopper());
     controller.rightStick().whileTrue(superstructure.backTurret());
+    //
+    //controller.leftBumper().whileTrue(new ShootAtDistance(shooters));
 
-   controller.leftBumper().toggleOnTrue(
-       new ShootOnTheMoveCommand(drivetrain, superstructure, () -> superstructure.getAimPoint())
-           .ignoringDisable(true)
-           .withName("OperatorControls.aimCommand"));
+  //  controller.leftBumper().toggleOnTrue(
+  //      new ShootOnTheMoveCommand(drivetrain, superstructure, () -> superstructure.getAimPoint())
+  //          .ignoringDisable(true)
+  //          .withName("OperatorControls.aimCommand"));
+    
+      
+        // Left Bumper: Shooting (Interpolated)
+          controller.leftBumper().whileTrue(
+              shooters.runInterpolatedShot(shooters::getHubDistance)
+                  .finallyDo(interrupted -> {
+                      shooters.stopShooters();
+                      shooters.resetRPSAdjustment();
+                  })
+                  .withName("RunBothShooters"));
+
+
 
     // controller.leftBumper().toggleOnTrue(
     //     new PhoenixCannon()

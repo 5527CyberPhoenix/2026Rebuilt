@@ -61,14 +61,14 @@ public class IntakeSubsystem extends SubsystemBase {
   // 5:1, 5:1, 60/18 reduction
   private SmartMotorControllerConfig intakePivotSmartMotorConfig = new SmartMotorControllerConfig(this)
       .withControlMode(ControlMode.CLOSED_LOOP)
-      .withClosedLoopController(20, 0, 0, DegreesPerSecond.of(360), DegreesPerSecondPerSecond.of(360))
-      .withFeedforward(new SimpleMotorFeedforward(0, 13, 0))
+      .withClosedLoopController(12, 0, 0, DegreesPerSecond.of(360), DegreesPerSecondPerSecond.of(360))
+      .withFeedforward(new SimpleMotorFeedforward(0, 10, 0))
       .withTelemetry("IntakePivotMotor", TelemetryVerbosity.HIGH)
       .withGearing(new MechanismGearing(GearBox.fromReductionStages(5, 5, 60.0 / 18.0)))
       // .withGearing(new MechanismGearing(GearBox.fromReductionStages(5, 5, 60.0 /
       // 18.0, 42)))
       .withMotorInverted(false)
-      .withIdleMode(MotorMode.COAST)
+      .withIdleMode(MotorMode.BRAKE)
       .withSoftLimit(Degrees.of(0), Degrees.of(150))
       .withStatorCurrentLimit(Amps.of(40))
       .withClosedLoopRampRate(Seconds.of(0.1))
@@ -161,7 +161,8 @@ public class IntakeSubsystem extends SubsystemBase {
   }
 
   private void setIntakeDeployed() {
-    intakePivotController.setPosition(Degrees.of(150));
+    intakePivotController.setPosition(Degrees.of(119
+    ));
   }
 
   @Override

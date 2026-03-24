@@ -55,7 +55,8 @@ public class Turret extends SubsystemBase {
     .withTelemetry("Motor", TelemetryVerbosity.HIGH)
     .withGearing(new MechanismGearing(GearBox.fromReductionStages(4,10)))
     .withMotorInverted(true)
-    .withIdleMode(MotorMode.COAST)
+    .withIdleMode(MotorMode.BRAKE
+    )
     .withSoftLimit(Degrees.of(-90), Degrees.of(90))
     .withStatorCurrentLimit(Amps.of(10))
     .withClosedLoopRampRate(Seconds.of(.1))
